@@ -1,0 +1,28 @@
+services:
+  endpoint:
+    build: ./endpoint
+    container_name: stage1-endpoint
+    hostname: endpoint01
+    networks:
+      range-net:
+        ipv4_address: 10.10.10.10
+    tty: true
+
+  attacker:
+    build: ./attacker
+    container_name: stage1-attacker
+    hostname: attacker01
+    networks:
+      range-net:
+        ipv4_address: 10.10.10.20
+    tty: true
+    depends_on:
+      - endpoint
+
+networks:
+  range-net:
+    driver: bridge
+    internal: true          # no route out to the host's network or the internet
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
