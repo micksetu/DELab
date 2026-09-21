@@ -1,0 +1,37 @@
+services:
+  endpoint:
+    build: ./endpoint
+    container_name: stage2-endpoint
+    hostname: endpoint01
+    environment:
+      - WAZUH_MANAGER_HOST=wazuh.manager
+    networks:
+      range-net:
+        ipv4_address: 10.10.10.10
+      wazuh-net: {}
+    tty: true
+
+  attacker:
+    build: ../stage-1-environment/attacker
+    container_name: stage2-attacker
+    hostname: attacker01
+    networks:
+      range-net:
+        ipv4_address: 10.10.10.20
+    tty: true
+    depends_on:
+      - endpoint
+
+networks:
+  # same isolated range as Stage 1 - attacker <-> endpoint traffic stays here
+  range-net:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
+  # the Wazuh stack's own network, joined by name (see deploy.sh) - carries
+  # only agent <-> manager telemetry, and only the endpoint is on it
+  wazuh-net:
+    external: true
+    name: ${WAZUH_NETWORK}

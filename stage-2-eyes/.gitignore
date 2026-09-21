@@ -1,0 +1,4 @@
+vendor/
+.env
+wazuh-authd-override.yml
+config/authd.pass
