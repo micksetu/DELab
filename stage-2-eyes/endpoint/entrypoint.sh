@@ -70,6 +70,25 @@ if [ -f "$CONF" ]; then
     </enrollment>" "$CONF"
 fi
 
+# Make sure the agent actually reads the SSH/sudo/login log. The agent's
+# installer only adds <localfile> entries for log files that exist at
+# install time - and during 'docker build' rsyslog has never run, so
+# /var/log/auth.log doesn't exist yet and the entry is silently left out.
+# Without this, SSH bruteforces never reach Wazuh.
+touch /var/log/auth.log
+if [ -f "$CONF" ] && ! grep -q '<location>/var/log/auth.log</location>' "$CONF"; then
+  # ossec.conf may contain several <ossec_config> blocks; add our own.
+  cat >> "$CONF" <<'EOF'
+
+<ossec_config>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+</ossec_config>
+EOF
+fi
+
 # wazuh-agentd enrolls itself against wazuh-authd on first connect, then
 # keeps retrying in the background if the manager isn't reachable yet -
 # so it's fine if this starts slightly before the manager is fully up.

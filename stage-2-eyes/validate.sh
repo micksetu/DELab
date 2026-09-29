@@ -2,10 +2,10 @@
 # Stage 2 acceptance test:
 # "A known activity produces an identifiable event in Wazuh."
 # This script checks the pipeline is wired up; actually generating and
-# finding an event is the students' Stage 2 exercise (see STUDENT-TOUR.md
-# once it exists).
-set -e
+# finding an event is the students' Stage 2 exercise (see STUDENT-TOUR.md).
 PASS=1
+MANAGER="stage2-eyes-wazuh-wazuh.manager-1"
+AGENT_NAME="endpoint01"
 
 echo "[*] Checking our containers are running..."
 for c in stage2-endpoint stage2-attacker; do
@@ -19,7 +19,7 @@ done
 
 echo "[*] Checking the Wazuh stack is running..."
 for name in "wazuh.manager" "wazuh.indexer" "wazuh.dashboard"; do
-  CID=$(docker ps --filter "name=${name}" --format '{{.ID}}' | head -n1)
+  CID=$(docker ps --filter "name=stage2-eyes-wazuh-${name}" --format '{{.ID}}' | head -n1)
   if [ -z "$CID" ]; then
     echo "    FAIL: $name container not found/running"
     PASS=0
@@ -36,14 +36,34 @@ else
   PASS=0
 fi
 
-echo "[*] Checking the Wazuh agent on the endpoint has connected to the manager..."
-if docker exec stage2-endpoint sh -c "grep -q 'Connected to the server' /var/ossec/logs/ossec.log 2>/dev/null"; then
-  echo "    OK: agent reports connected"
+echo "[*] Checking the endpoint can find the Wazuh manager on the network..."
+if docker exec stage2-endpoint getent hosts wazuh.manager > /dev/null 2>&1; then
+  echo "    OK: wazuh.manager resolves ($(docker exec stage2-endpoint getent hosts wazuh.manager | awk '{print $1}'))"
 else
-  echo "    WARN: agent not showing connected yet - this can take up to a minute"
-  echo "          after deploy. Re-run this script, or check:"
-  echo "          docker exec stage2-endpoint tail -30 /var/ossec/logs/ossec.log"
+  echo "    FAIL: endpoint can't resolve wazuh.manager - it isn't on the Wazuh network."
+  echo "          Re-run ./deploy.sh."
   PASS=0
+fi
+
+echo "[*] Checking the manager lists the agent as Active..."
+# The manager's view is what the dashboard shows, so check that rather than
+# only the agent's own log.
+STATUS=$(docker exec "$MANAGER" /var/ossec/bin/agent_control -l 2>/dev/null | grep "Name: ${AGENT_NAME},")
+if echo "$STATUS" | grep -q "Active"; then
+  echo "    OK: $AGENT_NAME is Active on the manager"
+else
+  PASS=0
+  AGENT_LOG=$(docker exec stage2-endpoint tail -50 /var/ossec/logs/ossec.log 2>/dev/null)
+  if echo "$AGENT_LOG" | grep -q "Duplicate agent name"; then
+    echo "    FAIL: the manager still has an old '$AGENT_NAME' registration and"
+    echo "          is rejecting this endpoint. Re-run ./deploy.sh - it removes"
+    echo "          the old registration and recreates the endpoint."
+  else
+    echo "    WARN: $AGENT_NAME not Active yet${STATUS:+ (manager says: $(echo "$STATUS" | sed -E 's/.*, //'))}."
+    echo "          This can take up to a minute after deploy - wait and re-run."
+    echo "          If it persists, check the agent's log:"
+    echo "          docker exec stage2-endpoint tail -30 /var/ossec/logs/ossec.log"
+  fi
 fi
 
 echo ""

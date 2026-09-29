@@ -1,6 +1,14 @@
+# Fixed project name, so container/network names don't depend on what the
+# folder is called (deploy.sh and reset.sh refer to them by name).
+name: stage2-eyes
+
 services:
   endpoint:
-    build: ./endpoint
+    build:
+      context: ./endpoint
+      args:
+        # agent pinned to the manager's release - set by deploy.sh from WAZUH_TAG
+        WAZUH_VERSION: ${WAZUH_VERSION}
     container_name: stage2-endpoint
     hostname: endpoint01
     environment:

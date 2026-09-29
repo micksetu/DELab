@@ -30,7 +30,7 @@ As before:
 ## Part 0 — Orientation (3 min)
 
 ```bash
-cd detection-engineering-lab/stage-2-eyes
+cd DELab/stage-2-eyes
 ./validate.sh
 ```
 
@@ -67,7 +67,8 @@ Log in:
 > quickstart setup, not something unique to your deployment. Fine for a
 > disposable local lab; never reuse it anywhere real.
 
-Once you're in, find **Agents management** in the left-hand menu. You
+Once you're in, open the menu (☰, top-left) and find **Agents management
+→ Summary**. You
 should see one agent: `endpoint01`, with a green "Active" status. This
 confirms what `validate.sh` already told you from the command line — now
 you're seeing the same fact from the other end of the pipeline.
@@ -90,7 +91,24 @@ processes all running.
 docker exec stage2-endpoint tail -20 /var/ossec/logs/ossec.log
 ```
 
-> 💡 **Note:** this is the exact file (and the exact command) used to
+Now check *what* the agent has been told to read. Wazuh only sees log
+files listed in its config:
+
+```bash
+docker exec stage2-endpoint grep -B1 -A1 '/var/log/auth.log' /var/ossec/etc/ossec.conf
+```
+
+You should see a `<localfile>` entry for `/var/log/auth.log`, the file
+where Linux records SSH logins and `sudo` use.
+
+> 💡 **Note:** Wazuh's installer only adds entries for log files that
+> exist when it's installed. Inside a freshly built container that file
+> doesn't exist yet, so the entry was missing and SSH attacks never reached
+> Wazuh. This lab's endpoint now adds it on start-up. It's a good example
+> of a real monitoring gap: the agent was running and "Active" the whole
+> time, it just wasn't looking at the right file.
+
+> 💡 **Note:** `ossec.log` is the exact file (and the exact command) used to
 > debug this environment's own enrollment problems while it was being
 > built — troubleshooting a "why isn't this agent connecting" problem
 > starts here nearly every time in a real Wazuh deployment.
@@ -99,8 +117,7 @@ docker exec stage2-endpoint tail -20 /var/ossec/logs/ossec.log
 
 ## Part 3 — Find baseline activity in the dashboard (10 min)
 
-Back in the dashboard, find **Discover** in the left menu (sometimes under
-an "Explore" or magnifying-glass icon, depending on the Wazuh version).
+Back in the dashboard, open the menu (☰) and go to **Explore → Discover**.
 This is a raw search over everything the manager has received.
 
 In the search bar, try:
@@ -123,6 +140,12 @@ the fields — look for:
 ```
 agent.name:endpoint01 AND full_log:*student*
 ```
+
+> 💡 **Note on time zones:** the containers log in UTC, but the
+> dashboard shows times in your browser's local time. In Ireland in
+> summer (UTC+1), an event logged at `10:00` inside the endpoint appears as
+> `11:00` in the dashboard. Nothing is wrong. Keep it in mind whenever you
+> line up a dashboard event with a log file.
 
 > 🧪 **Try it yourself:** narrow the time range (top-right of the
 > dashboard) to the last 15 minutes and count how many baseline events you
@@ -161,8 +184,8 @@ few and look at the same fields as before.
 > covered, and understanding what a rule actually does by writing your
 > own instead of only relying on someone else's.
 
-Check the **Security events** section of the dashboard (rather than raw
-Discover) and see if the bruteforce shows up there as a triggered alert,
+Check **Threat intelligence → Threat Hunting** (menu ☰) rather than raw
+Discover, and see if the bruteforce shows up there as a triggered alert,
 with a rule ID and description.
 
 > 🧪 **Try it yourself:** run `./port_scan.sh` from the attacker too. Does
@@ -180,7 +203,7 @@ Stop the agent and watch what happens:
 docker exec stage2-endpoint /var/ossec/bin/wazuh-control stop
 ```
 
-Back in the dashboard's **Agents management**, refresh — `endpoint01`
+Back in the dashboard's **Agents management → Summary**, refresh — `endpoint01`
 should now show as "Disconnected" after a short delay.
 
 Start it again:
@@ -225,7 +248,7 @@ Jot down brief answers:
 | Run the bruteforce | (inside `stage2-attacker`) `./ssh_bruteforce.sh` |
 | Wipe and rebuild everything | `./reset.sh` (takes a while — see note below) |
 
-> 🧪 **If you finished early:** open **Security events** and look for a
+> 🧪 **If you finished early:** open **Threat Hunting** and look for a
 > rule with a name involving "SCA" or "Security Configuration Assessment"
 > — that's a separate built-in module quietly auditing the endpoint's
 > configuration against a CIS benchmark, running the whole time, that we

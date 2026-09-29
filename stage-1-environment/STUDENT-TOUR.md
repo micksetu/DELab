@@ -1,7 +1,7 @@
 # Stage 1 Tour — Kicking the Tyres
 
 **Time:** ~30–45 minutes (go at your own pace — some parts have optional extras if you finish early)
-**You'll need:** Docker Desktop running, and this repo unzipped somewhere on your machine.
+**You'll need:** Docker Desktop running, and this repo (`DELab`) cloned somewhere on your machine.
 **Where to work:** Docker Desktop's built-in **Terminal** (not a separate app) — open Docker Desktop, then use its terminal panel, or open a normal terminal and confirm `docker` works by typing `docker --version`.
 
 This tour has two goals: get comfortable with basic Docker/command-line workflow, and get familiar with the layout of the range you'll be using for the rest of the module. You don't need to understand *everything* you see today — just enough to navigate confidently.
@@ -19,7 +19,7 @@ Throughout, boxes like this flag things worth noticing:
 Open a terminal and move into the Stage 1 folder:
 
 ```bash
-cd detection-engineering-lab/stage-1-environment
+cd DELab/stage-1-environment
 ls
 ```
 

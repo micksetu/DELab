@@ -10,6 +10,13 @@ This package contains the confirmed-working versions of Stages 1 and 2.
 | 4     | Investigation (Velociraptor) | not yet built |
 | 5     | Incident      | not yet built |
 
+## Getting the lab
+
+```bash
+git clone https://github.com/micksetu/DELab.git
+cd DELab
+```
+
 Start with [`stage-1-environment/`](./stage-1-environment/README.md), then
 [`stage-2-eyes/`](./stage-2-eyes/README.md).
 

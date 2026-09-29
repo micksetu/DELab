@@ -41,6 +41,14 @@ override file, network discovery) to plug our endpoint into it. Bumping to
 a newer Wazuh release for a future cohort is a one-line change to
 `WAZUH_TAG`, not a rewrite.
 
+The same `WAZUH_TAG` also pins the endpoint's **agent** package (passed
+through as the `WAZUH_VERSION` build arg). Wazuh refuses agents newer than
+the manager, so leaving the agent unpinned would silently break enrollment
+the first time a student rebuilds after Wazuh ships a new 4.x release.
+Bumping the tag moves both together; after a bump, rebuild the endpoint
+(`./reset.sh`, or `docker compose build --no-cache endpoint`) so it picks up
+the new agent.
+
 ## Prerequisites
 
 - Everything from Stage 1 (Docker Desktop, terminal).
@@ -65,6 +73,23 @@ a newer Wazuh release for a future cohort is a one-line change to
 First deploy takes several minutes (cloning Wazuh, pulling three sizeable
 images, generating certificates, indexer startup). Re-running `deploy.sh`
 after that reuses the cloned repo.
+
+`deploy.sh` is safe to re-run at any time, and clears the usual blockers
+itself before starting:
+
+- **Stage 1 still running.** Both stages use `10.10.10.0/24` and Docker
+  refuses to create a second network with the same range, so Stage 2 stops
+  Stage 1 first.
+- **Leftovers from earlier attempts** (old containers, networks and Wazuh
+  volumes) are removed.
+- **Stale agent registrations.** Every deploy gives the endpoint a fresh
+  start, and removes any old `endpoint01` registration from the manager
+  first, so the new one isn't rejected as a duplicate.
+- **Certificate problems on macOS** (see Troubleshooting).
+
+On macOS it may ask for your computer password while fixing certificate
+file permissions. That's expected; it's only used for files inside
+`vendor/`.
 
 **Dashboard:** `https://localhost:443` — login `admin` / `SecretPassword`.
 That's the wazuh-docker single-node project's own default (baked into its
@@ -101,13 +126,15 @@ enroll. It would be the wrong call for anything internet-facing.
   the endpoint has a route out via the Wazuh network.
 - No detection rules, alerting, or ATT&CK mapping yet — an event existing
   in Wazuh is not the same as Wazuh *noticing* it. That's Stage 3.
-- `reset.sh` removes the whole `vendor/wazuh-docker` directory, not just
-  the containers. Wazuh's manager keeps its agent-registration state on
-  bind-mounted host folders rather than Docker-managed volumes, so
-  `docker compose down -v` alone doesn't actually clear it - a partial
-  reset can leave stale agent state that causes confusing enrollment
-  failures. A first-run-style clone is the only way to guarantee the
-  "back to known-good baseline" promise from Stage 1 actually holds here.
+- `reset.sh` removes Wazuh's containers **and** its Docker volumes (the
+  manager keeps agent registrations in them), plus the whole
+  `vendor/wazuh-docker` directory with its generated certificates, then
+  redeploys. That's what makes it a genuine return to baseline. The
+  certificate generator leaves `vendor/` read-only, so on some machines
+  `reset.sh` asks for your password to delete it.
+- `vendor/` and `.env` are git-ignored, so deploying and resetting never
+  touch tracked files - `git pull` to pick up course updates works without
+  needing a separate working copy.
 - No enrollment password (see above) — acceptable for an isolated
   disposable lab, not a pattern to carry into anything else.
 
@@ -119,6 +146,18 @@ enroll. It would be the wrong call for anything internet-facing.
   automatically; if not, on Windows run
   `wsl -d docker-desktop sysctl -w vm.max_map_count=262144` and restart
   Docker Desktop. On Mac this is normally already handled.
+- **"Pool overlaps with other one on this address space"** or similar IP
+  address errors: another Docker network is using `10.10.10.0/24`.
+  `deploy.sh` stops Stage 1 automatically and names any other network that
+  clashes - remove that one and re-run.
+- **macOS: "error while creating mount source path ... root-ca-manager.pem"**:
+  the certificate generator can't finish its last step on Docker Desktop
+  for macOS, so Docker created a folder where a file should be.
+  `deploy.sh` now detects and repairs this; if you still see it, run
+  `./reset.sh`.
+- **"Duplicate agent name: endpoint01"** in the agent's log: the manager
+  still holds an old registration. Re-run `./deploy.sh`, which removes it
+  and recreates the endpoint.
 - **Agent never shows "Connected to the server"**: check
   `docker exec stage2-endpoint tail -30 /var/ossec/logs/ossec.log` for the
   actual error, and confirm the manager container is healthy
