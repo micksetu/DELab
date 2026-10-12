@@ -94,5 +94,12 @@ fi
 # so it's fine if this starts slightly before the manager is fully up.
 /var/ossec/bin/wazuh-control start || echo "WARNING: wazuh-agent failed to start, continuing without it"
 
-# SSH stays in the foreground so the container has a PID 1 to track
-exec /usr/sbin/sshd -D -e
+# SSH stays in the foreground so the container has a PID 1 to track.
+#
+# IMPORTANT: no -e here. The -e flag makes sshd write its logs to stderr
+# INSTEAD of syslog, so "Accepted password" / "Failed password" lines never
+# reach rsyslog or /var/log/auth.log - which is exactly the file the Wazuh
+# agent collects. With -e, SSH logins and bruteforces generate no Wazuh
+# events at all (the Stage 3 detection, and the built-in SSH rules, never
+# fire). Logging via syslog is what the whole detection pipeline depends on.
+exec /usr/sbin/sshd -D

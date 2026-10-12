@@ -1,0 +1,51 @@
+<!--
+  Stage 3 example custom detection.
+
+  This is the file you edit. It maps to Wazuh's own supported extension
+  point (/var/ossec/etc/rules/local_rules.xml, already included by the
+  shipped default ossec.conf) - so adding detections here never touches
+  Wazuh's own core ruleset. Add your own rules below the example, using
+  IDs 100000+ (that range is reserved for local/custom rules, so you can
+  never collide with the shipped ruleset).
+
+  Load it with ./reload-rules.sh, which validates the ruleset before it
+  restarts the manager - a syntax error rolls back instead of taking the
+  manager down. Test any rule with ./test-rules.sh (wazuh-logtest) before
+  trusting it. See README.md.
+-->
+<group name="local,syslog,sshd,">
+
+  <!--
+    Detection: successful SSH login to the 'student' account.
+
+    Why this one, and not "detect SSH bruteforce"? Wazuh's default ruleset
+    already does that (rule 5763, "brute force trying to get access",
+    built on the per-failure rule 5760) - writing our own version of
+    something that already exists teaches nothing. This rule detects
+    something the default ruleset has no way to know: that THIS SPECIFIC
+    account, in THIS SPECIFIC lab, is a deliberately weak one nobody
+    should be routinely logging into. That environment-specific context -
+    which accounts/hosts/behaviours are unusual for YOUR estate - is
+    exactly what custom detection engineering is for.
+
+    ATT&CK: T1078 (Valid Accounts) - an adversary using a legitimate
+    account's credentials to gain access.
+
+    Parent rule: 5715 "sshd: authentication success" (shipped ruleset,
+    0095-sshd_rules.xml). We add a field match on top of a rule Wazuh
+    already provides - we don't reimplement SSH log parsing. Rule 5715's
+    own level is 3 (informational); we raise this specific case to 10.
+  -->
+  <rule id="100010" level="10">
+    <if_sid>5715</if_sid>
+    <user>^student$</user>
+    <description>Successful SSH login to the monitored 'student' account</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>local_detection,valid_accounts,</group>
+  </rule>
+
+  <!-- Add your own detections below this line. -->
+
+</group>

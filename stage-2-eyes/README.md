@@ -159,13 +159,13 @@ enroll. It would be the wrong call for anything internet-facing.
   still holds an old registration. Re-run `./deploy.sh`, which removes it
   and recreates the endpoint.
 - **Agent never shows "Connected to the server"**: check
-  `docker exec stage2-endpoint tail -30 /var/ossec/logs/ossec.log` for the
+  `docker exec delab-endpoint tail -30 /var/ossec/logs/ossec.log` for the
   actual error, and confirm the manager container is healthy
   (`docker ps`). A password mismatch shows up as an authentication error
   in that log.
 - **`deploy.sh` fails at the network-discovery step**: run
   `docker network ls` and confirm a network exists whose name starts with
-  `stage2-eyes-wazuh`. If Wazuh's containers didn't start at all, that
+  `delab-wazuh`. If Wazuh's containers didn't start at all, that
   step never created one — check `docker compose logs` from
-  `vendor/wazuh-docker/single-node` (with `COMPOSE_PROJECT_NAME=stage2-eyes-wazuh`
+  `vendor/wazuh-docker/single-node` (with `COMPOSE_PROJECT_NAME=delab-wazuh`
   set) first.

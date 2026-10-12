@@ -81,21 +81,21 @@ You've now seen the agent is "Active" from the manager's point of view.
 Check the agent's own point of view too, back in the terminal:
 
 ```bash
-docker exec stage2-endpoint /var/ossec/bin/wazuh-control status
+docker exec delab-endpoint /var/ossec/bin/wazuh-control status
 ```
 
 You should see `wazuh-agentd`, `wazuh-logcollector`, and a few other
 processes all running.
 
 ```bash
-docker exec stage2-endpoint tail -20 /var/ossec/logs/ossec.log
+docker exec delab-endpoint tail -20 /var/ossec/logs/ossec.log
 ```
 
 Now check *what* the agent has been told to read. Wazuh only sees log
 files listed in its config:
 
 ```bash
-docker exec stage2-endpoint grep -B1 -A1 '/var/log/auth.log' /var/ossec/etc/ossec.conf
+docker exec delab-endpoint grep -B1 -A1 '/var/log/auth.log' /var/ossec/etc/ossec.conf
 ```
 
 You should see a `<localfile>` entry for `/var/log/auth.log`, the file
@@ -158,7 +158,7 @@ agent.name:endpoint01 AND full_log:*student*
 Time to put something deliberate into the pipeline. From a terminal:
 
 ```bash
-docker exec -it stage2-attacker bash
+docker exec -it delab-attacker bash
 ./ssh_bruteforce.sh
 exit
 ```
@@ -200,7 +200,7 @@ with a rule ID and description.
 Stop the agent and watch what happens:
 
 ```bash
-docker exec stage2-endpoint /var/ossec/bin/wazuh-control stop
+docker exec delab-endpoint /var/ossec/bin/wazuh-control stop
 ```
 
 Back in the dashboard's **Agents management → Summary**, refresh — `endpoint01`
@@ -209,7 +209,7 @@ should now show as "Disconnected" after a short delay.
 Start it again:
 
 ```bash
-docker exec stage2-endpoint /var/ossec/bin/wazuh-control start
+docker exec delab-endpoint /var/ossec/bin/wazuh-control start
 ```
 
 and confirm it goes back to "Active".
@@ -240,12 +240,14 @@ Jot down brief answers:
 | What you want to do | Command |
 |---|---|
 | Check the whole environment is healthy | `./validate.sh` |
-| Check the agent's own status | `docker exec stage2-endpoint /var/ossec/bin/wazuh-control status` |
-| Stop / start the agent | `docker exec stage2-endpoint /var/ossec/bin/wazuh-control stop` / `... start` |
-| Tail the agent's log | `docker exec stage2-endpoint tail -20 /var/ossec/logs/ossec.log` |
-| Tail the manager's log | `docker exec stage2-eyes-wazuh-wazuh.manager-1 tail -20 /var/ossec/logs/ossec.log` |
-| Run the recon scan | (inside `stage2-attacker`) `./port_scan.sh` |
-| Run the bruteforce | (inside `stage2-attacker`) `./ssh_bruteforce.sh` |
+| Check the agent's own status | `docker exec delab-endpoint /var/ossec/bin/wazuh-control status` |
+| Stop / start the agent | `docker exec delab-endpoint /var/ossec/bin/wazuh-control stop` / `... start` |
+| Tail the agent's log | `docker exec delab-endpoint tail -20 /var/ossec/logs/ossec.log` |
+| Tail the manager's log | `docker exec delab-wazuh-wazuh.manager-1 tail -20 /var/ossec/logs/ossec.log` |
+| Run the recon scan | (inside `delab-attacker`) `./port_scan.sh` |
+| Run the bruteforce | (inside `delab-attacker`) `./ssh_bruteforce.sh` |
+| Stop the lab when done (frees RAM, keeps state) | `../stop.sh` |
+| Resume the lab next time (no rebuild) | `../start.sh` |
 | Wipe and rebuild everything | `./reset.sh` (takes a while — see note below) |
 
 > 🧪 **If you finished early:** open **Threat Hunting** and look for a

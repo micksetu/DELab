@@ -2,12 +2,12 @@
 set -e
 cd "$(dirname "$0")"
 
-PROJECT_NAME="stage2-eyes-wazuh"
+PROJECT_NAME="delab-wazuh"
 
 echo "[*] Tearing down endpoint/attacker..."
-docker rm -f stage2-endpoint stage2-attacker >/dev/null 2>&1 || true
-# (stage-2-eyes_range-net is the name older versions of this lab used)
-docker network rm stage2-eyes_range-net stage-2-eyes_range-net >/dev/null 2>&1 || true
+# delab-* are current; stage2-* are what older versions of this lab used.
+docker rm -f delab-endpoint delab-attacker stage2-endpoint stage2-attacker >/dev/null 2>&1 || true
+docker network rm delab_range-net stage2-eyes_range-net stage-2-eyes_range-net >/dev/null 2>&1 || true
 
 if [ -d vendor/wazuh-docker/single-node ]; then
   echo "[*] Tearing down Wazuh (manager/indexer/dashboard) and its stored data..."
@@ -44,4 +44,4 @@ if [ -d vendor ]; then
 fi
 
 echo "[*] Redeploying from a clean baseline..."
-./deploy.sh
+bash deploy.sh

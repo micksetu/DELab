@@ -9,7 +9,7 @@ STAGE2_DIR="$(pwd)"
 WAZUH_TAG="v4.14.7"
 WAZUH_VERSION="${WAZUH_TAG#v}"
 
-PROJECT_NAME="stage2-eyes-wazuh"
+PROJECT_NAME="delab-wazuh"
 VENDOR_DIR="$STAGE2_DIR/vendor/wazuh-docker"
 SINGLE_NODE="$VENDOR_DIR/single-node"
 CERT_DIR="$SINGLE_NODE/config/wazuh_indexer_ssl_certs"
@@ -46,15 +46,17 @@ if docker ps -a --format '{{.Names}}' | grep -Eqx 'stage1-(endpoint|attacker)'; 
 fi
 
 # Leftover endpoint/attacker containers (and their range network) from an
-# earlier attempt - recreated below anyway.
-docker rm -f stage2-endpoint stage2-attacker >/dev/null 2>&1 || true
-# (stage-2-eyes_range-net is the name older versions of this lab used)
-docker network rm stage2-eyes_range-net stage-2-eyes_range-net >/dev/null 2>&1 || true
+# earlier attempt - recreated below anyway. The stage2-* names are what
+# older versions of this lab used, before everything shared the delab-*
+# naming; remove those too so an upgrade doesn't leave two of each behind.
+docker rm -f delab-endpoint delab-attacker stage2-endpoint stage2-attacker >/dev/null 2>&1 || true
+docker network rm delab_range-net stage2-eyes_range-net stage-2-eyes_range-net >/dev/null 2>&1 || true
 
 # Anything else still holding 10.10.10.0/24 will make the endpoint/attacker
 # fail with an address-pool error.
 for net in $(docker network ls -q); do
   name=$(docker network inspect -f '{{.Name}}' "$net")
+  [ "$name" = "delab_range-net" ] && continue
   if docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' "$net" | grep -q '10\.10\.10\.0/24'; then
     echo "    FAIL: Docker network '$name' already uses 10.10.10.0/24."
     echo "    Stop whatever uses it, run 'docker network rm $name',"
@@ -141,8 +143,14 @@ done
 # ---- 3. Bring up the Wazuh stack under its own compose project ----------
 # No enrollment password - see Stage 2 README's "How agent enrollment
 # works" section for why.
-echo "[*] Starting Wazuh manager, indexer, dashboard..."
-wazuh_compose -f docker-compose.yml up -d
+#
+# Start the indexer FIRST and wait for it, then start the manager and
+# dashboard. The dashboard runs a one-time saved-objects migration against
+# the indexer on first boot; if it starts before the indexer is ready it
+# can get wedged waiting on a migration lock from its own earlier failed
+# attempt, and never recovers. Gating on the indexer avoids that race.
+echo "[*] Starting the Wazuh indexer first..."
+wazuh_compose -f docker-compose.yml up -d wazuh.indexer
 
 echo "[*] Waiting for the Wazuh indexer's cluster to come up (can take a couple of minutes)..."
 echo "    (this checks the indexer's own logs, since its image has no Docker healthcheck)"
@@ -154,6 +162,9 @@ for i in $(seq 1 30); do
   echo "    still starting... (${i}/30)"
   sleep 10
 done
+
+echo "[*] Starting the Wazuh manager and dashboard now the indexer is ready..."
+wazuh_compose -f docker-compose.yml up -d
 
 echo "[*] Waiting for the Wazuh manager to accept agents..."
 for i in $(seq 1 30); do

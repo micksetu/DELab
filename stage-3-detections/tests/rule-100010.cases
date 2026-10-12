@@ -1,0 +1,21 @@
+# Test cases for rule 100010 (successful SSH login to 'student').
+#
+# Format, one case per line:   EXPECT|RULE_ID|LOG LINE
+#   EXPECT = MATCH    the log line SHOULD make RULE_ID the final matching rule
+#   EXPECT = NOMATCH  the log line should NOT trigger RULE_ID
+# Blank lines and lines starting with # are ignored.
+#
+# ./test-rules.sh feeds each log line to the manager's wazuh-logtest and
+# checks the outcome. Every rule you write should have at least one MATCH
+# case and one NOMATCH case - a rule you've only tested with the "yes"
+# case is a rule whose boundaries you don't actually know.
+
+# A successful login as 'student' must fire our custom rule.
+MATCH|100010|Jan  1 00:00:00 endpoint01 sshd[1234]: Accepted password for student from 10.10.10.20 port 54321 ssh2
+
+# A successful login as any other account must NOT fire it (no false positive).
+NOMATCH|100010|Jan  1 00:00:00 endpoint01 sshd[1235]: Accepted password for admin from 10.10.10.20 port 54322 ssh2
+
+# A FAILED login as 'student' is a different event (rule 5760), not a
+# successful one - our rule builds on 5715 (success), so it must not fire.
+NOMATCH|100010|Jan  1 00:00:00 endpoint01 sshd[1236]: Failed password for student from 10.10.10.20 port 54323 ssh2

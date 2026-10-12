@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nmap \
     curl \
     hydra \
+    sshpass \
     openssh-client \
     iputils-ping \
     netcat-traditional \

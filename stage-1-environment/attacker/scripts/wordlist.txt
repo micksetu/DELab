@@ -1,5 +1,12 @@
 123456
 letmein
-password123
 qwerty
 admin
+welcome
+monkey
+dragon
+iloveyou
+trustno1
+changeme
+password
+password123
