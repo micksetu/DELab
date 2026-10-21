@@ -1,0 +1,41 @@
+# Fixed project name, so the Velociraptor container/network names don't
+# depend on what this folder is called.
+name: delab-stage4
+
+services:
+  # Velociraptor server + GUI. The endpoint/attacker and the whole Wazuh
+  # stack are NOT here - Stage 4 layers onto the running delab lab and only
+  # adds this one container. The Velociraptor client runs on the shared
+  # delab-endpoint (wired up by deploy.sh), not as a service here.
+  velociraptor:
+    image: ghcr.io/velocidex/velociraptor-server:0.77.3
+    container_name: delab-velociraptor
+    hostname: velociraptor
+    restart: unless-stopped
+    environment:
+      # The server advertises this hostname; the client config deploy.sh
+      # extracts points back at it, and the endpoint resolves it via the
+      # network alias below. Keep the three in sync.
+      - VELOCIRAPTOR_HOSTNAME=velociraptor
+      - VELOCIRAPTOR_INITIAL_ADMIN_PASSWORD=${VELOCIRAPTOR_ADMIN_PASSWORD}
+    ports:
+      # GUI only. Client traffic (frontend, port 8000) stays inside the
+      # Docker network - it never needs to be reachable from the host.
+      - "8889:8889"
+    networks:
+      wazuh-net:
+        aliases:
+          - velociraptor
+    volumes:
+      # Server config + datastore persist here so enrolled clients and the
+      # generated config survive a restart. reset.sh removes this directory.
+      - ./velociraptor-data/etc:/etc/velociraptor
+      - ./velociraptor-data/datastore:/datastore
+
+networks:
+  # The shared Wazuh network created by Stage 2 (joined by name, same as
+  # Stage 2's own compose does). The endpoint is already on it, so the
+  # Velociraptor client on the endpoint can reach this server.
+  wazuh-net:
+    external: true
+    name: ${WAZUH_NETWORK}

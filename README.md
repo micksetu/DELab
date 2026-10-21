@@ -1,13 +1,13 @@
 # Detection Engineering & Incident Response Teaching Lab
 
-This package contains the confirmed-working versions of Stages 1 to 3.
+This package contains the confirmed-working versions of Stages 1 to 4.
 
 | Stage | Name          | Status      |
 |-------|---------------|-------------|
 | 1     | Environment   | ✅ included, validated |
 | 2     | Eyes (Wazuh)  | ✅ included, validated |
 | 3     | Detections    | ✅ included, validated |
-| 4     | Investigation (Velociraptor) | not yet built |
+| 4     | Investigation (Velociraptor) | ✅ included, validated |
 | 5     | Incident      | not yet built |
 
 ## Getting the lab
@@ -19,11 +19,13 @@ cd DELab
 
 Start with [`stage-1-environment/`](./stage-1-environment/README.md), then
 [`stage-2-eyes/`](./stage-2-eyes/README.md), then
-[`stage-3-detections/`](./stage-3-detections/README.md).
+[`stage-3-detections/`](./stage-3-detections/README.md), then
+[`stage-4-investigation/`](./stage-4-investigation/README.md).
 
-Stages 2 and 3 share one running environment (containers named `delab-*`):
-Stage 2 brings the Wazuh stack up, and Stage 3 layers a custom detection
-rule onto it rather than starting a second copy.
+Stages 2–4 share one running environment (containers named `delab-*`):
+Stage 2 brings the Wazuh stack up, Stage 3 layers a custom detection rule
+onto it, and Stage 4 adds Velociraptor for investigation — each builds on
+the one running lab rather than starting its own copy.
 
 
 ## Stopping and resuming

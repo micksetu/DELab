@@ -94,6 +94,20 @@ fi
 # so it's fine if this starts slightly before the manager is fully up.
 /var/ossec/bin/wazuh-control start || echo "WARNING: wazuh-agent failed to start, continuing without it"
 
+# ---- Velociraptor client (new in Stage 4; optional) ----------------------
+# Stage 4 injects a Velociraptor binary + client.config.yaml into
+# /opt/velociraptor at deploy time. That can't happen at image-build time -
+# the client config is generated from the Velociraptor SERVER, which only
+# exists once the lab is running (same reason Wazuh enrollment happens here,
+# not in the Dockerfile). This block relaunches the client if those files
+# are present, so it survives an endpoint restart. It is a harmless no-op on
+# Stages 2-3, where /opt/velociraptor doesn't exist.
+if [ -x /opt/velociraptor/velociraptor ] && [ -f /opt/velociraptor/client.config.yaml ]; then
+  echo "[entrypoint] starting Velociraptor client..."
+  /opt/velociraptor/velociraptor --config /opt/velociraptor/client.config.yaml client -v \
+    > /var/log/velociraptor-client.log 2>&1 &
+fi
+
 # SSH stays in the foreground so the container has a PID 1 to track.
 #
 # IMPORTANT: no -e here. The -e flag makes sshd write its logs to stderr
