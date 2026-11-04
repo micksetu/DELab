@@ -1,5 +1,9 @@
 FROM debian:bookworm-slim
 
+# iptables is installed here but unused until Stage 5: Wazuh's firewall-drop
+# active response (Stage 5) shells out to iptables on the agent to block an
+# attacker's IP. Harmless dead weight on Stages 2-4. Pairs with cap_add:
+# NET_ADMIN on the endpoint service in docker-compose.yml.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     sudo \
@@ -8,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     iputils-ping \
     net-tools \
+    iptables \
     curl \
     ca-certificates \
     gnupg \

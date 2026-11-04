@@ -13,6 +13,12 @@ services:
     hostname: endpoint01
     environment:
       - WAZUH_MANAGER_HOST=wazuh.manager
+    # NET_ADMIN lets the Wazuh agent modify iptables for the Stage 5
+    # firewall-drop active response (blocking an attacker's IP on the
+    # endpoint). Unused by Stages 2-4; granting it changes nothing until
+    # Stage 5 is deployed.
+    cap_add:
+      - NET_ADMIN
     networks:
       range-net:
         ipv4_address: 10.10.10.10

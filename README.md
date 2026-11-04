@@ -1,6 +1,6 @@
 # Detection Engineering & Incident Response Teaching Lab
 
-This package contains the confirmed-working versions of Stages 1 to 4.
+This package contains the confirmed-working versions of Stages 1 to 5.
 
 | Stage | Name          | Status      |
 |-------|---------------|-------------|
@@ -8,7 +8,7 @@ This package contains the confirmed-working versions of Stages 1 to 4.
 | 2     | Eyes (Wazuh)  | ✅ included, validated |
 | 3     | Detections    | ✅ included, validated |
 | 4     | Investigation (Velociraptor) | ✅ included, validated |
-| 5     | Incident      | not yet built |
+| 5     | Response (active response) | ✅ included, validated |
 
 ## Getting the lab
 
@@ -20,12 +20,18 @@ cd DELab
 Start with [`stage-1-environment/`](./stage-1-environment/README.md), then
 [`stage-2-eyes/`](./stage-2-eyes/README.md), then
 [`stage-3-detections/`](./stage-3-detections/README.md), then
-[`stage-4-investigation/`](./stage-4-investigation/README.md).
+[`stage-4-investigation/`](./stage-4-investigation/README.md), then
+[`stage-5-response/`](./stage-5-response/README.md).
 
-Stages 2–4 share one running environment (containers named `delab-*`):
+Stages 2–5 share one running environment (containers named `delab-*`):
 Stage 2 brings the Wazuh stack up, Stage 3 layers a custom detection rule
-onto it, and Stage 4 adds Velociraptor for investigation — each builds on
-the one running lab rather than starting its own copy.
+onto it, Stage 4 adds Velociraptor for investigation, and Stage 5 adds an
+automated response — each builds on the one running lab rather than
+starting its own copy.
+
+Stage 5 is outside the standard assessed basis (Stages 1–4): it's an
+"active response" extension. A heavier SOAR orchestration add-on (Shuffle)
+is noted there as optional, and is not included.
 
 
 ## Stopping and resuming

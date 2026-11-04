@@ -1,0 +1,3 @@
+# Stage 5 (active response) generates no local files, but keep .env ignored
+# in case an optional SOAR add-on (e.g. Shuffle) is layered here later.
+.env
