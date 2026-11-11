@@ -11,6 +11,10 @@ and both dashboard logins:
 - Wazuh: `https://localhost:443` — `admin` / `SecretPassword`
 - Velociraptor: `https://localhost:8889` — `admin` / `VelociraptorLab123!`
 
+> **Apple Silicon Mac:** if the Velociraptor server crashes when you deploy,
+> turn on Docker Desktop → Settings → General → "Use Rosetta for x86/amd64
+> emulation" and redeploy. See Stage 4's `README.md` for why.
+
 Every stage so far has added one capability. Today you connect them: an
 alert from Stage 3 becomes the *starting point* of an investigation, not
 the end of the story. Wazuh tells you something happened; Velociraptor is

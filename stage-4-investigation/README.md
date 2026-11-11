@@ -71,6 +71,12 @@ before it reports success.
 Both use self-signed certs for the local lab — click through the browser
 warning (same as Wazuh). These are fixed teaching-only defaults.
 
+> **On an Apple Silicon (M-series) Mac?** The Velociraptor server image is
+> Intel-only and crashes on first start under Docker's default emulation.
+> Before deploying, enable Docker Desktop → **Settings → General → "Use
+> Rosetta for x86/amd64 emulation"**, then run `./deploy.sh`. (Details in
+> Troubleshooting below. Intel Macs, Linux and Windows are unaffected.)
+
 ## Doing an investigation
 
 1. Trigger the Stage 3 alert for real — from the attacker:
@@ -126,6 +132,16 @@ rather than only running a canned artefact.
 
 ## Troubleshooting
 
+- **Apple Silicon (M-series Mac): the Velociraptor server crashes on startup,
+  and `deploy.sh` reports "the server never generated its config":** the
+  `velociraptor-server` image is built for Intel (amd64) only, and Docker's
+  default QEMU emulation makes it panic during startup (in
+  `LoadBuiltInArtifacts`). Fix: Docker Desktop → **Settings → General →**
+  enable **"Use Rosetta for x86/amd64 emulation"** (and "Use Virtualization
+  framework"), **Apply & Restart**, then re-run `./deploy.sh`. Rosetta
+  translates the Intel image faithfully where QEMU doesn't. Wazuh, the
+  endpoint and the attacker are unaffected either way — only Velociraptor
+  needs this. (Intel Macs, Linux and Windows don't need it at all.)
 - **Client shows "No certificate found for destination" once, then sleeps:**
   normal on the *first* poll — the client fetches and pins the server cert,
   backs off, and enrols on the next poll. `deploy.sh` waits for this.
